@@ -2503,7 +2503,7 @@ operator:
   image:
     override: ~
     repository: "quay.io/cilium/operator"
-    tag: "v1.15.6"
+    tag: "v1.17.0"
     # operator-generic-digest
     genericDigest: "sha256:5789f0935eef96ad571e4f5565a8800d3a8fbb05265cf6909300cd82fd513c3d"
     # operator-azure-digest
