@@ -3406,7 +3406,7 @@ authentication:
         initImage:
           override: ~
           repository: "docker.io/library/busybox"
-          tag: "1.36.1"
+          tag: "1.37.0"
           digest: "sha256:223ae047b1065bd069aac01ae3ac8088b3ca4a527827e283b85112f29385fb1b"
           useDigest: true
           pullPolicy: "IfNotPresent"
