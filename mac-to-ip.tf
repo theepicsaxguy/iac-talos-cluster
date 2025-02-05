@@ -32,5 +32,5 @@ output "mac-to-ip" {
 variable "mac-to-ip_scan_subnets" {
   description = "Subnets to scan MAC addresses for IP addresses."
   type        = list(string)
-  default     = ["10.0.0.1/24"]
+  default     = ["10.25.150.1/24"]
 }

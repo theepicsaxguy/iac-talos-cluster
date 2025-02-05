@@ -41,6 +41,7 @@ provider "registry.terraform.io/hashicorp/external" {
   version = "2.3.3"
   hashes = [
     "h1:/x65slrvO8YG5MKxE2DaU5udEbUxBu3BgEiO7EEM9bQ=",
+    "h1:H+3QlVPs/7CDa3I4KU/a23wYeGeJxeBlgvR7bfK1t1w=",
     "zh:03d81462f9578ec91ce8e26f887e34151eda0e100f57e9772dbea86363588239",
     "zh:37ec2a20f6a3ec3a0fd95d3f3de26da6cb9534b30488bc45723e118a0911c0d8",
     "zh:4eb5b119179539f2749ce9de0e1b9629d025990f062f4f4dddc161562bb89d37",
@@ -59,6 +60,7 @@ provider "registry.terraform.io/hashicorp/external" {
 provider "registry.terraform.io/hashicorp/local" {
   version = "2.5.1"
   hashes = [
+    "h1:8oTPe2VUL6E2d3OcrvqyjI4Nn/Y/UEQN26WLk5O/B0g=",
     "h1:Np4kERf9SMrqUi7DJ1rK3soMK14k49nfgE7l/ipQ5xw=",
     "zh:0af29ce2b7b5712319bf6424cb58d13b852bf9a777011a545fac99c7fdcdf561",
     "zh:126063ea0d79dad1f68fa4e4d556793c0108ce278034f101d1dbbb2463924561",
@@ -79,6 +81,7 @@ provider "registry.terraform.io/hashicorp/null" {
   version = "3.2.2"
   hashes = [
     "h1:m467k2tZ9cdFFgHW7LPBK2GLPH43LC6wc3ppxr8yvoE=",
+    "h1:zT1ZbegaAYHwQa+QwIFugArWikRJI9dqohj8xb0GY88=",
     "zh:3248aae6a2198f3ec8394218d05bd5e42be59f43a3a7c0b71c66ec0df08b69e7",
     "zh:32b1aaa1c3013d33c245493f4a65465eab9436b454d250102729321a44c8ab9a",
     "zh:38eff7e470acb48f66380a73a5c7cdd76cc9b9c9ba9a7249c7991488abe22fe3",
@@ -97,6 +100,7 @@ provider "registry.terraform.io/hashicorp/null" {
 provider "registry.terraform.io/hashicorp/time" {
   version = "0.11.1"
   hashes = [
+    "h1:IkDriv5C9G+kQQ+mP+8QGIahwKgbQcw1/mzh9U6q+ZI=",
     "h1:bf7JCfBV8KHOJ0iicZ705maRJTeme0Br4QdBYnu1gMw=",
     "zh:19a393db736ec4fd024d098d55aefaef07056c37a448ece3b55b3f5f4c2c7e4a",
     "zh:227fa1e221de2907f37be78d40c06ca6a6f7b243a1ec33ade014dfaf6d92cd9c",
@@ -118,6 +122,7 @@ provider "registry.terraform.io/ivoronin/macaddress" {
   constraints = "0.3.2"
   hashes = [
     "h1:odGJMVDUJRVbSin/o5OJ656Wx8LOAptkQyqpy5ED6Z4=",
+    "h1:yk0ASl2cAoc/22tvpi9Kke+WvowgXGq0QwaP93IQ+S0=",
     "zh:00cb168d9210ed88cfa7de8a33d5666b2cf6660a5d20a7a96348b8b902833eca",
     "zh:1366458320df0b6f1132e59b5410931c0c5626bbf27b05b29dd311311a710e9b",
     "zh:2e8102c7f6046665c95b806752d692843f2e846554f7eba85690cd2087c9048a",
@@ -139,6 +144,7 @@ provider "registry.terraform.io/justenwalker/synclocal" {
   version     = "0.0.2"
   constraints = ">= 0.0.2"
   hashes = [
+    "h1:Ul1CfT45TPbiiGuoIFAeLBFdDGus7DFYRzJH7zQDOak=",
     "h1:vlYThgCpQ6XJj7Jb71bBmGzK8IqnxeObOisCB69ox0U=",
     "zh:00a6c78726a47dac1cc3d7ed2c973c0f9beb9f7b8b96ccf4c58696441ffaf8c0",
     "zh:04dd3ddb19d46e858dfd5790de19e92404ca32731ed60dae0eb6c8439e667def",

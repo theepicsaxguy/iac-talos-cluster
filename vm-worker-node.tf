@@ -76,12 +76,13 @@ resource "proxmox_virtual_environment_vm" "talos-worker-node" {
   disk {
     interface    = "virtio0"
     size         = each.value.disk_size
-    datastore_id = var.proxmox_servers[each.value.target_server].disk_storage_pool
+    datastore_id = var.proxmox_servers[each.value.target_server].disk_storage_pool  # ✅ Corrected
     file_format  = "raw"
     cache        = "writethrough"
     iothread     = true
     backup       = false
   }
+
 
   dynamic "disk" {
     for_each = var.worker_nodes[each.value.index].data_disks
