@@ -4,7 +4,7 @@ go 1.22.5
 
 require (
 	github.com/go-pogo/errors v0.11.2
-	github.com/hashicorp/hcl/v2 v2.21.0
+	github.com/hashicorp/hcl/v2 v2.23.0
 )
 
 require (
