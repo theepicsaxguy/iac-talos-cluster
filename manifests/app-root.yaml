@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app-root
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+
+spec:
+  project: default
+  source:
+    path: manifests/apps
+    repoURL: https://github.com/roeldev/iac-talos-cluster
+    targetRevision: HEAD
+  destination:
+    name: in-cluster
+    namespace: default
+  syncPolicy:
+    automated: { }

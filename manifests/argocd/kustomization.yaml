@@ -1,0 +1,12 @@
+namespace: argocd
+resources:
+  - namespace.yaml
+  - argocd.yaml
+
+patches:
+  - path: kustomize-enable-helm.patch.yaml
+    target:
+      version: v1
+      kind: ConfigMap
+      name: argocd-cm
+      namespace: argocd
