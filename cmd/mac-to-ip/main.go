@@ -25,7 +25,10 @@ func main() {
 	// wanneer res < args, vraag om input?
 	// of arp -a | grep mac via proxmox host
 
-	out, err := json.Marshal(res)
+	output := map[string]map[string]string{
+		"result": res,
+	}
+	out, err := json.Marshal(output)
 	errors.FatalOnErr(err)
 	_, _ = os.Stdout.Write(out)
 }

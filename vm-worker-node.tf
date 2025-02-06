@@ -20,7 +20,6 @@ resource "macaddress" "talos-worker-node" {
 
 resource "proxmox_virtual_environment_vm" "talos-worker-node" {
   depends_on = [
-#     proxmox_virtual_environment_file.talos-iso,
     macaddress.talos-worker-node
   ]
   for_each = {
@@ -38,6 +37,7 @@ resource "proxmox_virtual_environment_vm" "talos-worker-node" {
   }
 
   initialization {
+    datastore_id = var.proxmox_servers[each.value.target_server].disk_storage_pool
     ip_config {
       ipv4 {
         address = "${cidrhost(var.network_cidr, each.key + var.worker_node_first_ip)}/${split("/", var.network_cidr)[1]}"
@@ -48,7 +48,7 @@ resource "proxmox_virtual_environment_vm" "talos-worker-node" {
 
   cdrom {
     enabled = true
-    file_id = replace(local.talos_iso_image_location, "%", var.talos_version)
+    file_id = "local:iso/${var.talos_iso_path}"
   }
 
   cpu {
@@ -64,9 +64,10 @@ resource "proxmox_virtual_environment_vm" "talos-worker-node" {
   network_device {
     enabled     = true
     model       = "virtio"
-    bridge      = var.proxmox_servers[each.value.target_server].network_bridge
+    bridge      = var.proxmox_servers[each.value.target_server].network_bridge  // Use the bridge from the variable
     mac_address = macaddress.talos-worker-node[each.key].address
     firewall    = false
+    vlan_id     = var.proxmox_vlan_tag  // Set VLAN ID here
   }
 
   operating_system {
@@ -76,6 +77,7 @@ resource "proxmox_virtual_environment_vm" "talos-worker-node" {
   disk {
     interface    = "virtio0"
     size         = var.control_plane_disk_size
+    #datastore_id = var.proxmox_servers[each.value.target_server].disk_storage_pool
     datastore_id = var.proxmox_servers[each.value].disk_storage_pool
     file_format  = "raw"
     cache        = "writethrough"
@@ -83,7 +85,6 @@ resource "proxmox_virtual_environment_vm" "talos-worker-node" {
     backup       = false
     storage_type = var.proxmox_storage_type  # Add storage type (e.g., zfspool)
   }
-
 
 
   dynamic "disk" {

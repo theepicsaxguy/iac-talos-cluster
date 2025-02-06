@@ -23,3 +23,8 @@ variable "talos_iso_destination_storage_pool" {
   type        = string
   default     = "local"
 }
+variable "talos_iso_path" {
+  description = "The path to the Talos ISO file in the Proxmox storage"
+  type        = string
+  default     = "metal-amd64.iso"
+}

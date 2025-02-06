@@ -6,3 +6,6 @@
 *.tfplan
 *.tmp
 kubeconfig.y*
+.aider*
+.env
+aider/
