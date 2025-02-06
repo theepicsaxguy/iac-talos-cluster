@@ -12,6 +12,22 @@ variable "proxmox_api_url" {
   description = "The URL for the Proxmox API."
   type        = string
 }
+variable "proxmox_vlan_tag" {
+  description = "Optional VLAN tag for Proxmox VMs."
+  type        = number
+  default     = 0
+}
+variable "proxmox_storage_type" {
+  description = "Storage type for Proxmox VMs (e.g., 'zfspool' for ZFS)."
+  type        = string
+  default     = "zfspool"
+}
+provider "proxmox" {
+  endpoint          = var.proxmox_api_url
+  api_token_id      = var.proxmox_api_token_id
+  api_token_secret  = var.proxmox_api_token_secret
+  insecure          = var.proxmox_tls_insecure
+}
 
 variable "proxmox_servers" {
   description = "Proxmox servers on which the talos cluster will be deployed"

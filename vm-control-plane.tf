@@ -75,9 +75,11 @@ resource "proxmox_virtual_environment_vm" "talos-control-plane" {
     enabled     = true
     model       = "virtio"
     bridge      = var.proxmox_servers[each.value].network_bridge
+    vlan_tag    = var.proxmox_vlan_tag  # Add VLAN Tag
     mac_address = macaddress.talos-control-plane[each.key].address
     firewall    = false
   }
+
 
   operating_system {
     type = "l26" # Linux kernel type
