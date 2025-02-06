@@ -75,13 +75,15 @@ resource "proxmox_virtual_environment_vm" "talos-worker-node" {
 
   disk {
     interface    = "virtio0"
-    size         = each.value.disk_size
-    datastore_id = var.proxmox_servers[each.value.target_server].disk_storage_pool  # ✅ Corrected
+    size         = var.control_plane_disk_size
+    datastore_id = var.proxmox_servers[each.value].disk_storage_pool
     file_format  = "raw"
     cache        = "writethrough"
     iothread     = true
     backup       = false
+    storage_type = var.proxmox_storage_type  # Add storage type (e.g., zfspool)
   }
+
 
 
   dynamic "disk" {

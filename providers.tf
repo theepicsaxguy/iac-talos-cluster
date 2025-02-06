@@ -3,7 +3,7 @@ terraform {
     proxmox = {
       # https://registry.terraform.io/providers/bpg/proxmox/latest/docs
       source  = "bpg/proxmox"
-      version = ">= 0.56.0"
+      version = ">= 0.70.0"
     }
     talos = {
       # https://registry.terraform.io/providers/siderolabs/talos/latest/docs
@@ -21,8 +21,3 @@ terraform {
   }
 }
 
-provider "proxmox" {
-  endpoint  = var.proxmox_api_url
-  api_token = "${var.proxmox_api_token_id}=${var.proxmox_api_token_secret}"
-  insecure  = true
-}
