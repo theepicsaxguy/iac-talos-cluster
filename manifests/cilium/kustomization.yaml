@@ -1,4 +1,4 @@
-namespace: cilium-system
+#namespace: cilium-system
 resources:
   - base
   - high-priority-scheduling.yaml

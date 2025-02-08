@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	subnet := "10.0.0.1/24"
+	subnet := "10.25.150.1/24"
 
 	fs := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 	fs.StringVar(&subnet, "subnet", subnet, "subnet(s) (cidr) to scan (comma separated list)")
@@ -25,10 +25,7 @@ func main() {
 	// wanneer res < args, vraag om input?
 	// of arp -a | grep mac via proxmox host
 
-	output := map[string]map[string]string{
-		"result": res,
-	}
-	out, err := json.Marshal(output)
+	out, err := json.Marshal(res)
 	errors.FatalOnErr(err)
 	_, _ = os.Stdout.Write(out)
 }

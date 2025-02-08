@@ -1,10 +1,10 @@
 module talos-cluster
 
-go 1.22.5
+go 1.23
 
 require (
-	github.com/go-pogo/errors v0.11.2
-	github.com/hashicorp/hcl/v2 v2.23.0
+	github.com/go-pogo/errors v0.11.1
+	github.com/hashicorp/hcl/v2 v2.21.0
 )
 
 require (
@@ -17,5 +17,5 @@ require (
 	golang.org/x/sys v0.5.0 // indirect
 	golang.org/x/text v0.11.0 // indirect
 	golang.org/x/tools v0.6.0 // indirect
-	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
+	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
 )

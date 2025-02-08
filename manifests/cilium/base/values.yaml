@@ -37,7 +37,8 @@ hubble:
 ipam:
   mode: kubernetes
 
-kubeProxyReplacement: strict
+data:
+  kubeProxyReplacement: "true"  # or "false"
 
 operator:
   replicas: 1

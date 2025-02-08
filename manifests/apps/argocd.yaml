@@ -9,7 +9,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/roeldev/iac-talos-cluster
+    repoURL: https://github.com/theepicsaxguy/iac-talos-cluster
     targetRevision: HEAD
     path: manifests/argocd
   destination:

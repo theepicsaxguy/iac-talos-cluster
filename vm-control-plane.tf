@@ -1,6 +1,7 @@
 locals {
-  talos_iso_image_location = var.talos_iso_path
+  talos_iso_image_location = "${var.talos_iso_destination_storage_pool}:iso/${replace(var.talos_iso_destination_filename, "%", var.talos_version)}"
 
+  //noinspection HILUnresolvedReference
   vm_control_planes = flatten([
     for name, host in var.proxmox_servers : [
       for i in range(host.control_planes_count) : name
@@ -9,12 +10,27 @@ locals {
   vm_control_planes_count = length(local.vm_control_planes)
 }
 
+# this keeps bitching about the file already exists... i know, just skip it then
+#
+# resource "proxmox_virtual_environment_file" "talos-iso" {
+#   content_type = "iso"
+#   datastore_id = var.talos_iso_destination_storage_pool
+#   node_name    = var.talos_iso_destination_server != "" ? var.talos_iso_destination_server : keys(var.proxmox_servers)[0]
+#   overwrite = false
+#
+#   source_file {
+#     path      = replace(var.talos_iso_download_url, "%", var.talos_version)
+#     file_name = replace(var.talos_iso_destination_filename, "%", var.talos_version)
+#   }
+# }
+
 resource "macaddress" "talos-control-plane" {
   count = length(local.vm_control_planes)
 }
 
 resource "proxmox_virtual_environment_vm" "talos-control-plane" {
   depends_on = [
+#     proxmox_virtual_environment_file.talos-iso,
     macaddress.talos-control-plane
   ]
   for_each = {
@@ -43,7 +59,7 @@ resource "proxmox_virtual_environment_vm" "talos-control-plane" {
 
   cdrom {
     enabled = true
-    file_id = "local:iso/${var.talos_iso_path}"
+    file_id =  replace(local.talos_iso_image_location, "%", var.talos_version)
   }
 
   cpu {
@@ -60,12 +76,10 @@ resource "proxmox_virtual_environment_vm" "talos-control-plane" {
     enabled     = true
     model       = "virtio"
     bridge      = var.proxmox_servers[each.value].network_bridge
-    vlan_tag    = var.proxmox_vlan_tag  # Add VLAN Tag
     mac_address = macaddress.talos-control-plane[each.key].address
     firewall    = false
-    vlan_id     = var.proxmox_vlan_tag  // Set VLAN ID here
+    vlan_id     = var.proxmox_servers[each.value].vlan_tag
   }
-
 
   operating_system {
     type = "l26" # Linux kernel type

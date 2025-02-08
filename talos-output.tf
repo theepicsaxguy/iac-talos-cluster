@@ -11,13 +11,14 @@ resource "local_sensitive_file" "export_talosconfig" {
 }
 
 resource "local_sensitive_file" "export_kubeconfig" {
-  depends_on = [talos_cluster_kubeconfig.this]
-  content    = talos_cluster_kubeconfig.this.kubeconfig_raw
+  depends_on = [talos_cluster_kubeconfig.this]  # Fixed
+  content    = talos_cluster_kubeconfig.this.kubeconfig_raw  # Fixed
   filename   = "${path.module}/output/kubeconfig"
 }
 
 data "external" "copy_talosconfig" {
   depends_on = [local_sensitive_file.export_talosconfig]
+
   program = [
     "go",
     "run",
@@ -29,6 +30,7 @@ data "external" "copy_talosconfig" {
 
 data "external" "copy_kubeconfig" {
   depends_on = [local_sensitive_file.export_kubeconfig]
+
   program = [
     "go",
     "run",

@@ -13,36 +13,17 @@ variable "proxmox_api_url" {
   type        = string
 }
 
-variable "proxmox_storage_type" {
-  description = "Storage type for Proxmox VMs (e.g., 'zfspool' for ZFS)."
-  type        = string
-  default     = "zfspool"
-}
-
-variable "proxmox_vlan_tag" {
-  description = "Optional VLAN tag for Proxmox VMs."
-  type        = number
-  default     = 0
-}
-
-variable "proxmox_api_insecure" {
-  description = "Allow insecure HTTPS connections (use with caution)."
-  type        = bool
-  default     = false
-}
-
 variable "proxmox_servers" {
   description = "Proxmox servers on which the talos cluster will be deployed"
   type        = map(object({
-    control_planes_count = optional(number, 1)
+    # Number of control plane nodes to deploy on the server
+    control_planes_count = optional(number, 3)
+    # The name of the storage pool where virtual hard disks will be stored
     disk_storage_pool    = string
+    # The name of the network bridge on the Proxmox host
     network_bridge       = optional(string, "vmbr0")
+    vlan_tag             = optional(number, 150)
+    # Additional kubernetes node labels to add to the nodes deployed on this server
     node_labels          = optional(map(string), {})
   }))
-}
-
-provider "proxmox" {
-  endpoint  = var.proxmox_api_url
-  insecure  = var.proxmox_api_insecure
-  api_token = "${var.proxmox_api_token_id}=${var.proxmox_api_token_secret}"
 }

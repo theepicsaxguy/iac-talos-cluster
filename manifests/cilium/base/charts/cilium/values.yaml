@@ -146,7 +146,7 @@ rollOutCiliumPods: false
 image:
   override: ~
   repository: "quay.io/cilium/cilium"
-  tag: "v1.17.0"
+  tag: "v1.15.6"
   pullPolicy: "IfNotPresent"
   # cilium-digest
   digest: "sha256:6aa840986a3a9722cd967ef63248d675a87add7e1704740902d5d3162f0c0def"
@@ -977,7 +977,7 @@ certgen:
   image:
     override: ~
     repository: "quay.io/cilium/certgen"
-    tag: "v0.2.3"
+    tag: "v0.1.12"
     digest: "sha256:bbc5e65e9dc65bc6b58967fe536b7f3b54e12332908aeb0a96a36866b4372b4e"
     useDigest: true
     pullPolicy: "IfNotPresent"
@@ -1236,7 +1236,7 @@ hubble:
     image:
       override: ~
       repository: "quay.io/cilium/hubble-relay"
-      tag: "v1.17.0"
+      tag: "v1.15.6"
        # hubble-relay-digest
       digest: "sha256:a0863dd70d081b273b87b9b7ce7e2d3f99171c2f5e202cd57bc6691e51283e0c"
       useDigest: true
@@ -1473,7 +1473,7 @@ hubble:
       image:
         override: ~
         repository: "quay.io/cilium/hubble-ui-backend"
-        tag: "v0.13.1"
+        tag: "v0.13.0"
         digest: "sha256:1e7657d997c5a48253bb8dc91ecee75b63018d16ff5e5797e5af367336bc8803"
         useDigest: true
         pullPolicy: "IfNotPresent"
@@ -1512,7 +1512,7 @@ hubble:
       image:
         override: ~
         repository: "quay.io/cilium/hubble-ui"
-        tag: "v0.13.1"
+        tag: "v0.13.0"
         digest: "sha256:7d663dc16538dd6e29061abd1047013a645e6e69c115e008bee9ea9fef9a6666"
         useDigest: true
         pullPolicy: "IfNotPresent"
@@ -2503,7 +2503,7 @@ operator:
   image:
     override: ~
     repository: "quay.io/cilium/operator"
-    tag: "v1.17.0"
+    tag: "v1.15.6"
     # operator-generic-digest
     genericDigest: "sha256:5789f0935eef96ad571e4f5565a8800d3a8fbb05265cf6909300cd82fd513c3d"
     # operator-azure-digest
@@ -2804,7 +2804,7 @@ preflight:
   image:
     override: ~
     repository: "quay.io/cilium/cilium"
-    tag: "v1.17.0"
+    tag: "v1.15.6"
     # cilium-digest
     digest: "sha256:6aa840986a3a9722cd967ef63248d675a87add7e1704740902d5d3162f0c0def"
     useDigest: true
@@ -2966,7 +2966,7 @@ clustermesh:
     image:
       override: ~
       repository: "quay.io/cilium/clustermesh-apiserver"
-      tag: "v1.17.0"
+      tag: "v1.15.6"
       # clustermesh-apiserver-digest
       digest: "sha256:6365c2fe8a038fc7adcdeb7ffb8d7a8a2cd3ee524687f35fff9df76fafeeb029"
       useDigest: true
@@ -3406,7 +3406,7 @@ authentication:
         initImage:
           override: ~
           repository: "docker.io/library/busybox"
-          tag: "1.37.0"
+          tag: "1.36.1"
           digest: "sha256:223ae047b1065bd069aac01ae3ac8088b3ca4a527827e283b85112f29385fb1b"
           useDigest: true
           pullPolicy: "IfNotPresent"
@@ -3416,7 +3416,7 @@ authentication:
           image:
             override: ~
             repository: "ghcr.io/spiffe/spire-agent"
-            tag: "1.11.1"
+            tag: "1.8.5"
             digest: "sha256:99405637647968245ff9fe215f8bd2bd0ea9807be9725f8bf19fe1b21471e52b"
             useDigest: true
             pullPolicy: "IfNotPresent"
@@ -3464,7 +3464,7 @@ authentication:
           image:
             override: ~
             repository: "ghcr.io/spiffe/spire-server"
-            tag: "1.11.1"
+            tag: "1.8.5"
             digest: "sha256:28269265882048dcf0fed32fe47663cd98613727210b8d1a55618826f9bf5428"
             useDigest: true
             pullPolicy: "IfNotPresent"
@@ -3527,7 +3527,7 @@ authentication:
       # If k8s Service DNS along with port number is used (e.g. <service-name>.<namespace>.svc(.*):<port-number> format),
       # Cilium Operator will resolve its address by looking up the clusterIP from Service resource.
       #
-      # Example values: 10.0.0.1:8081, spire-server.cilium-spire.svc:8081
+      # Example values: 10.25.150.1:8081, spire-server.cilium-spire.svc:8081
       serverAddress: ~
       # -- SPIFFE trust domain to use for fetching certificates
       trustDomain: spiffe.cilium
