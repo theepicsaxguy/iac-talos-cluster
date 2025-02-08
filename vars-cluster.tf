@@ -12,7 +12,7 @@ variable "cluster_vip" {
 variable "cluster_domain" {
   description = "Domain name of the Talos Kubernetes cluster"
   type        = string
-  default     = "talos-cluster.local"
+  default     = "kube.pc-tips.se"
 }
 
 variable "cluster_endpoint_port" {
