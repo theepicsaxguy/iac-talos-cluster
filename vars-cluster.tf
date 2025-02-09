@@ -1,7 +1,7 @@
 variable "cluster_name" {
   description = "Name of the Talos Kubernetes cluster"
   type        = string
-  default     = "talos-cluster"
+  default     = "kube"
 }
 
 variable "cluster_vip" {
@@ -12,7 +12,7 @@ variable "cluster_vip" {
 variable "cluster_domain" {
   description = "Domain name of the Talos Kubernetes cluster"
   type        = string
-  default     = "kube.pc-tips.se"
+  default     = "api.kube.pc-tips.se"
 }
 
 variable "cluster_endpoint_port" {
@@ -24,13 +24,13 @@ variable "cluster_endpoint_port" {
 variable "control_plane_first_ip" {
   description = "First ip of a control-plane"
   type        = number
-  default     = 111
+  default     = 11
 }
 
 variable "worker_node_first_ip" {
   description = "First ip of a worker node"
   type        = number
-  default     = 121
+  default     = 21
 }
 
 variable "install_disk_device" {

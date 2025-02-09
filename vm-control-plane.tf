@@ -30,7 +30,7 @@ resource "macaddress" "talos-control-plane" {
 
 resource "proxmox_virtual_environment_vm" "talos-control-plane" {
   depends_on = [
-#     proxmox_virtual_environment_file.talos-iso,
+    #     proxmox_virtual_environment_file.talos-iso,
     macaddress.talos-control-plane
   ]
   for_each = {
@@ -59,8 +59,9 @@ resource "proxmox_virtual_environment_vm" "talos-control-plane" {
 
   cdrom {
     enabled = true
-    file_id =  replace(local.talos_iso_image_location, "%", var.talos_version)
+    file_id = local.talos_iso_image_location
   }
+
 
   cpu {
     type    = "host"
@@ -69,7 +70,7 @@ resource "proxmox_virtual_environment_vm" "talos-control-plane" {
   }
 
   memory {
-    dedicated = var.control_plane_memory*1024
+    dedicated = var.control_plane_memory * 1024
   }
 
   network_device {

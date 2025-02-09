@@ -6,11 +6,12 @@ package main
 
 import (
 	"context"
-	"github.com/go-pogo/errors"
 	"os"
 	"os/exec"
 	"strings"
 	"time"
+
+	"github.com/go-pogo/errors"
 )
 
 func main() {

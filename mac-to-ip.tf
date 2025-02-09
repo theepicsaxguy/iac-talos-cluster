@@ -1,3 +1,4 @@
+
 # give the vms some time to boot before scanning for ip addresses
 resource "time_sleep" "wait_for_vms_to_boot" {
   depends_on = [

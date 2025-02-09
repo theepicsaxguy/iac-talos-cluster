@@ -5,11 +5,12 @@
 package main
 
 import (
-	"github.com/go-pogo/errors"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/go-pogo/errors"
 )
 
 const linuxHomePrefix = "~/"

@@ -6,7 +6,7 @@ data "external" "talos-nodes-ready" {
     "go",
     "run",
     "${path.module}/cmd/nodes-ready",
-  ],
+    ],
     [for i, cfg in proxmox_virtual_environment_vm.talos-control-plane : cfg.name],
     [for i, cfg in proxmox_virtual_environment_vm.talos-worker-node : cfg.name],
   )
