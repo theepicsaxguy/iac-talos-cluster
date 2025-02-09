@@ -20,7 +20,7 @@ resource "macaddress" "talos-worker-node" {
 
 resource "proxmox_virtual_environment_vm" "talos-worker-node" {
   depends_on = [
-#     proxmox_virtual_environment_file.talos-iso,
+    #     proxmox_virtual_environment_file.talos-iso,
     macaddress.talos-worker-node
   ]
   for_each = {
@@ -49,8 +49,9 @@ resource "proxmox_virtual_environment_vm" "talos-worker-node" {
 
   cdrom {
     enabled = true
-    file_id = replace(local.talos_iso_image_location, "%", var.talos_version)
+    file_id = local.talos_iso_image_location
   }
+
 
   cpu {
     type    = "host"
@@ -59,7 +60,7 @@ resource "proxmox_virtual_environment_vm" "talos-worker-node" {
   }
 
   memory {
-    dedicated = each.value.memory*1024
+    dedicated = each.value.memory * 1024
   }
 
   network_device {
@@ -67,7 +68,7 @@ resource "proxmox_virtual_environment_vm" "talos-worker-node" {
     model       = "virtio"
     bridge      = var.proxmox_servers[each.value.target_server].network_bridge
     mac_address = macaddress.talos-worker-node[each.key].address
-    vlan_id = try(var.proxmox_servers[each.value.target_server].vlan_tag, null)
+    vlan_id     = try(var.proxmox_servers[each.value.target_server].vlan_tag, null)
     firewall    = false
   }
 
@@ -89,7 +90,7 @@ resource "proxmox_virtual_environment_vm" "talos-worker-node" {
     for_each = var.worker_nodes[each.value.index].data_disks
 
     content {
-      interface    = "virtio${each.value.index+1}"
+      interface    = "virtio${each.value.index + 1}"
       size         = disk.value.size
       datastore_id = disk.value.storage_pool != "" ? disk.value.storage_pool : var.proxmox_servers[each.value.target_server].disk_storage_pool
       file_format  = "raw"

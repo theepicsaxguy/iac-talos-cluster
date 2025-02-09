@@ -4,17 +4,6 @@ resource "synclocal_url" "metrics_server_manifest" {
   filename = "${path.module}/manifests/metrics-server/metrics-server.yaml"
 }
 
-data "external" "kustomize_metrics-server" {
-  depends_on = [synclocal_url.metrics_server_manifest]
-  program    = [
-    "go",
-    "run",
-    "${path.module}/cmd/kustomize",
-    "--",
-    "${path.module}/manifests/metrics-server",
-  ]
-}
-
 # download and kustomize argocd manifests
 resource "synclocal_url" "argocd_manifest" {
   url      = local.argocd_manifest_url
@@ -28,10 +17,10 @@ data "external" "kustomize_bootstrap-manifests" {
     synclocal_url.argocd_manifest,
   ]
   for_each = {
-    for i, m in var.bootstrap_manifests: "bootstrap-manifest-${i}" => m
+    for i, m in var.bootstrap_manifests : "bootstrap-manifest-${i}" => m
   }
 
-  program  = [
+  program = [
     "go",
     "run",
     "${path.module}/cmd/kustomize",

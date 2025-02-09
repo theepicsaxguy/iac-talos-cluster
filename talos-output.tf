@@ -1,5 +1,6 @@
-resource "talos_cluster_kubeconfig" "this" {
-  depends_on           = [talos_machine_bootstrap.this]
+data "talos_cluster_kubeconfig" "this" {
+  depends_on = [talos_machine_bootstrap.this]
+
   client_configuration = data.talos_client_configuration.this.client_configuration
   node                 = cidrhost(var.network_cidr, var.control_plane_first_ip)
 }
@@ -11,8 +12,8 @@ resource "local_sensitive_file" "export_talosconfig" {
 }
 
 resource "local_sensitive_file" "export_kubeconfig" {
-  depends_on = [talos_cluster_kubeconfig.this]  # Fixed
-  content    = talos_cluster_kubeconfig.this.kubeconfig_raw  # Fixed
+  depends_on = [data.talos_cluster_kubeconfig.this]
+  content    = data.talos_cluster_kubeconfig.this.kubeconfig_raw
   filename   = "${path.module}/output/kubeconfig"
 }
 
@@ -53,6 +54,6 @@ output "talos_client_configuration" {
 }
 
 output "talos_cluster_kubeconfig" {
-  value     = talos_cluster_kubeconfig.this.kubeconfig_raw
+  value     = data.talos_cluster_kubeconfig.this
   sensitive = true
 }

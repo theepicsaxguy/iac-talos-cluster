@@ -10,3 +10,5 @@ kubeconfig.y*
 task_linux_amd64.deb
 bin/task
 manifests/cilium/base/charts/cilium-1.17.0/
+.aider*
+.env

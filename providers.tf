@@ -1,5 +1,22 @@
 terraform {
+  required_version = ">= 1.0"
   required_providers {
+    time = {
+      source  = "hashicorp/time"
+      version = ">= 0.7.2"
+    }
+    external = {
+      source  = "hashicorp/external"
+      version = ">= 2.2.2"
+    }
+    null = {
+      source  = "hashicorp/null"
+      version = ">= 3.2.1"
+    }
+    local = {
+      source  = "hashicorp/local"
+      version = ">= 2.4.0"
+    }
     proxmox = {
       # https://registry.terraform.io/providers/bpg/proxmox/latest/docs
       source  = "bpg/proxmox"

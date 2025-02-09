@@ -1,6 +1,6 @@
 locals {
   cluster_endpoint = "https://${var.cluster_domain}:${var.cluster_endpoint_port}"
-  storage_mnt      = "/var/mnt/storage"
+  #storage_mnt      = "/var/mnt/storage"
 
   # default talos_machine_configuration values
   talos_mc_defaults = {
@@ -10,10 +10,10 @@ locals {
     install_disk_device = var.install_disk_device,
     install_image_url   = replace(var.talos_machine_install_image_url, "%", var.talos_version),
 
-#    harbor_url      = var.harbor_url,
-#    harbor_domain   = split("://", var.harbor_url)[1]
-#    harbor_username = var.harbor_username
-#    harbor_password = var.harbor_password
+    #    harbor_url      = var.harbor_url,
+    #    harbor_domain   = split("://", var.harbor_url)[1]
+    #    harbor_username = var.harbor_username
+    #    harbor_password = var.harbor_password
   }
 }
 
@@ -23,7 +23,7 @@ data "talos_client_configuration" "this" {
   //noinspection HILUnresolvedReference
   client_configuration = talos_machine_secrets.this.client_configuration
   cluster_name         = var.cluster_name
-  endpoints            = concat([var.cluster_vip], [
+  endpoints = concat([var.cluster_vip], [
     for i in range(
       var.control_plane_first_ip, var.control_plane_first_ip + local.vm_control_planes_count
     ) : cidrhost(var.network_cidr, i)
