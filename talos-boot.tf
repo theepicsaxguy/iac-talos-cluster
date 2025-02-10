@@ -38,29 +38,71 @@ resource "talos_machine_configuration_apply" "control-planes" {
 
   client_configuration        = talos_machine_secrets.this.client_configuration
   machine_configuration_input = data.talos_machine_configuration.cp.machine_configuration
-
-  node = lookup(data.external.mac-to-ip.result, macaddress.talos-control-plane[each.key].address, "")
+  node                        = cidrhost(var.network_cidr, each.key + var.control_plane_first_ip)
+  apply_mode                  = "auto"
+  endpoint                    = cidrhost(var.network_cidr, each.key + var.control_plane_first_ip)
 
   config_patches = [
-    templatefile("${path.module}/talos-config/control-plane.yaml.tpl", {
-      topology_zone     = each.value,
-      cluster_domain    = var.cluster_domain,
-      cluster_endpoint  = local.cluster_endpoint,
-      network_interface = "enx${lower(replace(macaddress.talos-control-plane[each.key].address, ":", ""))}",
-      network_ip_prefix = var.network_ip_prefix,
-      network_gateway   = var.network_gateway,
-      hostname          = "${var.control_plane_name_prefix}-${each.key + 1}",
-      ipv4_local        = cidrhost(var.network_cidr, each.key + var.control_plane_first_ip),
-      ipv4_vip          = var.cluster_vip,
-      inline_manifests  = jsonencode(terraform_data.inline-manifests.output),
-    }),
+    yamlencode({
+      machine = {
+        type = "controlplane"
+        network = {
+          hostname = "${var.control_plane_name_prefix}-${each.key + 1}"
+          interfaces = [{
+            interface = "enx${lower(replace(macaddress.talos-control-plane[each.key].address, ":", ""))}"
+            addresses = ["${cidrhost(var.network_cidr, each.key + var.control_plane_first_ip)}/${var.network_ip_prefix}"]
+            routes = [{
+              network = "0.0.0.0/0"
+              gateway = var.network_gateway
+            }]
+          }]
+        }
+        kubelet = {
+          extraArgs = {
+            "node-ip" = cidrhost(var.network_cidr, each.key + var.control_plane_first_ip)
+          }
+        }
+        install = {
+          extensions = []
+        }
+      }
+      cluster = {
+        apiServer = {
+          certSANs = [local.cluster_endpoint]
+        }
+        controllerManager = {}
+        scheduler         = {}
+        network = {
+          dnsDomain      = var.cluster_domain
+          podSubnets     = ["10.244.0.0/16"]
+          serviceSubnets = ["10.96.0.0/12"]
+        }
+        token = ""
+        ca    = null
+        discovery = {
+          enabled = true
+          registries = {
+            service = {
+              endpoint = "https://registry-1.docker.io"
+            }
+          }
+        }
+        inlineManifests = jsondecode(jsonencode(terraform_data.inline-manifests.output))
+      }
+    })
   ]
+}
+
+resource "time_sleep" "wait_after_control_planes" {
+  depends_on      = [talos_machine_configuration_apply.control-planes]
+  create_duration = "3m"
 }
 
 resource "talos_machine_configuration_apply" "worker-nodes" {
   depends_on = [
     data.external.mac-to-ip,
     data.talos_machine_configuration.wn,
+    time_sleep.wait_after_control_planes
   ]
   for_each = {
     for i, x in local.vm_worker_nodes : i => x
@@ -68,54 +110,82 @@ resource "talos_machine_configuration_apply" "worker-nodes" {
 
   client_configuration        = talos_machine_secrets.this.client_configuration
   machine_configuration_input = data.talos_machine_configuration.wn.machine_configuration
+  node                        = cidrhost(var.network_cidr, each.key + var.worker_node_first_ip)
+  apply_mode                  = "auto"
+  endpoint                    = cidrhost(var.network_cidr, each.key + var.worker_node_first_ip)
 
-  node = lookup(data.external.mac-to-ip.result, macaddress.talos-worker-node[each.key].address, "")
-
-  config_patches = concat([
-    templatefile("${path.module}/talos-config/worker-node.yaml.tpl", {
-      topology_zone     = each.value.target_server,
-      cluster_domain    = var.cluster_domain,
-      network_interface = "enx${lower(replace(macaddress.talos-worker-node[each.key].address, ":", ""))}",
-      network_ip_prefix = var.network_ip_prefix,
-      network_gateway   = var.network_gateway,
-      hostname          = "${var.worker_node_name_prefix}-${each.key + 1}",
-      ipv4_local        = cidrhost(var.network_cidr, each.key + var.worker_node_first_ip),
-      ipv4_vip          = var.cluster_vip,
-    }),
-    templatefile("${path.module}/talos-config/node-labels.yaml.tpl", {
-      node_labels = jsonencode(each.value.node_labels),
+  config_patches = [
+    yamlencode({
+      machine = {
+        type = "worker"
+        network = {
+          hostname = "${var.worker_node_name_prefix}-${each.key + 1}"
+          interfaces = [{
+            interface = "enx${lower(replace(macaddress.talos-worker-node[each.key].address, ":", ""))}"
+            addresses = ["${cidrhost(var.network_cidr, each.key + var.worker_node_first_ip)}/${var.network_ip_prefix}"]
+            routes = [{
+              network = "0.0.0.0/0"
+              gateway = var.network_gateway
+            }]
+          }]
+        }
+        kubelet = {
+          extraArgs = {
+            "node-ip" = cidrhost(var.network_cidr, each.key + var.worker_node_first_ip)
+          }
+        }
+        install = {
+          extensions = []
+        }
+        nodeLabels = each.value.node_labels
+      }
+      cluster = {
+        discovery = {
+          enabled = true
+        }
+        network = {
+          dnsDomain      = var.cluster_domain
+          podSubnets     = ["10.244.0.0/16"]
+          serviceSubnets = ["10.96.0.0/12"]
+        }
+      }
     })
-    ],
-    [
-      for disk in each.value.data_disks : templatefile(
-        "${path.module}/talos-config/worker-node-disk.yaml.tpl",
-        {
-          disk_device = "/dev/${disk.device_name}",
-          mount_point = disk.mount_point,
-      })
-    ]
-  )
+  ]
+}
+
+// Add a more comprehensive wait period for Talos nodes to be fully ready
+resource "null_resource" "wait_for_talos_ready" {
+  depends_on = [
+    talos_machine_configuration_apply.control-planes,
+    talos_machine_configuration_apply.worker-nodes
+  ]
+}
+
+resource "time_sleep" "wait_after_talos_ready" {
+  depends_on      = [null_resource.wait_for_talos_ready]
+  create_duration = "2m"
 }
 
 resource "talos_machine_bootstrap" "this" {
   depends_on = [
     talos_machine_configuration_apply.control-planes,
-    talos_machine_configuration_apply.worker-nodes
+    talos_machine_configuration_apply.worker-nodes,
+    time_sleep.wait_after_talos_ready
   ]
 
   client_configuration = talos_machine_secrets.this.client_configuration
   node                 = cidrhost(var.network_cidr, var.control_plane_first_ip)
+
+  timeouts = {
+    create = "2m"
+  }
 }
 
-# unfortunately, this does not really check, wait and retry for the cluster to
-# be ready but instead errors and fails when unable to connect to nodes that
-# are in the process of getting ready
-#
-# data "talos_cluster_health" "ready" {
-#   depends_on = [null_resource.talos-cluster-up]
-#
-#   client_configuration = talos_machine_secrets.this.client_configuration
-#   endpoints            = [for i, mac in macaddress.talos-control-plane : data.external.mac-to-ip.result[mac.address]]
-#   control_plane_nodes  = [for i, mac in macaddress.talos-control-plane : data.external.mac-to-ip.result[mac.address]]
-#   worker_nodes         = [for i, mac in macaddress.talos-worker-node : data.external.mac-to-ip.result[mac.address]]
-# }
+data "talos_cluster_health" "ready" {
+  depends_on = [null_resource.talos-cluster-up]
+
+  client_configuration = talos_machine_secrets.this.client_configuration
+  endpoints            = [for i in range(var.proxmox_servers.host3.control_planes_count) : cidrhost(var.network_cidr, i + var.control_plane_first_ip)]
+  control_plane_nodes  = [for i in range(var.proxmox_servers.host3.control_planes_count) : cidrhost(var.network_cidr, i + var.control_plane_first_ip)]
+  worker_nodes         = [for i in range(length(local.vm_worker_nodes)) : cidrhost(var.network_cidr, i + var.worker_node_first_ip)]
+}

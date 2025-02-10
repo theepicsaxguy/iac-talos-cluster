@@ -39,6 +39,10 @@ terraform {
       source  = "ivoronin/macaddress"
       version = "0.3.2"
     }
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = ">= 2.0.0"
+    }
   }
 }
 # Kubectl Provider Configuration
@@ -48,6 +52,11 @@ provider "kubectl" {
 
 provider "kubernetes" {
   config_path = "~/.kube/config" # or the path to your kubeconfig
+}
+
+provider "kubernetes" {
+  alias       = "argocd"
+  config_path = "~/.kube/config"
 }
 
 provider "proxmox" {

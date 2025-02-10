@@ -4,13 +4,13 @@ proxmox_api_token_id     = "root@pam!adw"
 proxmox_api_token_secret = "token"
 
 
-cluster_name = "talos"
-cluster_vip = "10.25.150.10"
-cluster_domain = "talos.local"
-cluster_endpoint_port = 6443
-control_plane_first_ip = 111
-worker_node_first_ip = 121
-install_disk_device = "/dev/vda"
+cluster_name           = "talos"
+cluster_vip            = "10.25.150.10"
+cluster_domain         = "talos.local"
+cluster_endpoint_port  = 6443
+control_plane_first_ip = 11
+worker_node_first_ip   = 21
+install_disk_device    = "/dev/vda"
 
 proxmox_servers = {
   host3 = {
