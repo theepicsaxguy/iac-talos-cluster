@@ -58,7 +58,6 @@ resource "proxmox_virtual_environment_vm" "talos-control-plane" {
   }
 
   cdrom {
-    enabled = true
     file_id = local.talos_iso_image_location
   }
 

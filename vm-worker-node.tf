@@ -48,7 +48,6 @@ resource "proxmox_virtual_environment_vm" "talos-worker-node" {
   }
 
   cdrom {
-    enabled = true
     file_id = local.talos_iso_image_location
   }
 

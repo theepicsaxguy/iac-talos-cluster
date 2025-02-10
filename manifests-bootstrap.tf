@@ -32,9 +32,11 @@ data "external" "kustomize_bootstrap-manifests" {
   ]
 }
 
-resource "null_resource" "apply_bootstrap-manifests" {
-  depends_on = [data.external.kustomize_bootstrap-manifests]
-  for_each   = data.external.kustomize_bootstrap-manifests
+# Apply the Argo CD Application Resources
+resource "null_resource" "apply_bootstrap_manifests" {
+  depends_on = [data.external.kustomize_bootstrap_manifests]
+  for_each   = data.external.kustomize_bootstrap_manifests
+
   provisioner "local-exec" {
     command = "kubectl apply --server-side=true -f ${path.module}/output/${each.key}.yaml"
   }

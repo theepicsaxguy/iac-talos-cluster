@@ -1,6 +1,6 @@
 # use kubectl to poll the readiness status of the nodes
 data "external" "talos-nodes-ready" {
-  depends_on = [null_resource.talos-cluster-up]
+  depends_on = [null_resource.talos-cluster-up, data.external.copy_kubeconfig]
 
   program = concat([
     "go",

@@ -5,6 +5,10 @@ terraform {
       source  = "hashicorp/time"
       version = ">= 0.7.2"
     }
+    kubectl = {
+      source  = "gavinbunney/kubectl"
+      version = ">= 1.14.0"
+    }
     external = {
       source  = "hashicorp/external"
       version = ">= 2.2.2"
@@ -36,6 +40,14 @@ terraform {
       version = "0.3.2"
     }
   }
+}
+# Kubectl Provider Configuration
+provider "kubectl" {
+  config_path = "~/.kube/config" # Ensure correct kubeconfig path
+}
+
+provider "kubernetes" {
+  config_path = "~/.kube/config" # or the path to your kubeconfig
 }
 
 provider "proxmox" {
