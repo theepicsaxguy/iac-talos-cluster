@@ -1,19 +1,11 @@
 locals {
-  cluster_endpoint = "https://${var.cluster_domain}:${var.cluster_endpoint_port}"
-  #storage_mnt      = "/var/mnt/storage"
-
-  # default talos_machine_configuration values
+  # only keep talos specific defaults here, kubernetes_base_endpoint moved to providers.tf
   talos_mc_defaults = {
     topology_region     = var.cluster_name,
     talos_version       = var.talos_version,
     network_gateway     = var.network_gateway,
     install_disk_device = var.install_disk_device,
     install_image_url   = replace(var.talos_machine_install_image_url, "%", var.talos_version),
-
-    #    harbor_url      = var.harbor_url,
-    #    harbor_domain   = split("://", var.harbor_url)[1]
-    #    harbor_username = var.harbor_username
-    #    harbor_password = var.harbor_password
   }
 }
 
@@ -34,7 +26,7 @@ data "talos_machine_configuration" "cp" {
   machine_type       = "controlplane"
   machine_secrets    = talos_machine_secrets.this.machine_secrets
   cluster_name       = var.cluster_name
-  cluster_endpoint   = local.cluster_endpoint
+  cluster_endpoint   = local.kubernetes_endpoint
   talos_version      = "v${var.talos_version}"
   kubernetes_version = "v${var.k8s_version}"
   docs               = false
@@ -49,7 +41,7 @@ data "talos_machine_configuration" "wn" {
   machine_type       = "worker"
   machine_secrets    = talos_machine_secrets.this.machine_secrets
   cluster_name       = var.cluster_name
-  cluster_endpoint   = local.cluster_endpoint
+  cluster_endpoint   = local.kubernetes_endpoint
   talos_version      = "v${var.talos_version}"
   kubernetes_version = "v${var.k8s_version}"
   docs               = false

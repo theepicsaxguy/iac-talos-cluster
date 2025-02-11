@@ -38,3 +38,9 @@ variable "install_disk_device" {
   type        = string
   default     = "/dev/vda"
 }
+
+variable "ha_mode" {
+  description = "Enable High Availability mode"
+  type        = bool
+  default     = false
+}

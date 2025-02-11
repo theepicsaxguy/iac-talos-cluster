@@ -1,0 +1,48 @@
+server:
+  extraArgs:
+    - --insecure
+  config:
+    repositories: |
+      - type: helm
+        name: argo
+        url: https://argoproj.github.io/argo-helm
+    resource.customizations: |
+      networking.k8s.io/Ingress:
+        health.lua: |
+          hs = {}
+          hs.status = "Healthy"
+          return hs
+
+configs:
+  cm:
+    url: https://argocd.cluster.local
+    application.resourceTrackingMethod: annotation
+    admin.enabled: true
+    timeout.reconciliation: 180s
+    
+controller:
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+repoServer:
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+applicationSet:
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi

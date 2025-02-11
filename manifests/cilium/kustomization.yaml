@@ -1,4 +1,22 @@
-#namespace: cilium-system
 resources:
-  - base
+  - namespace.yaml
   - high-priority-scheduling.yaml
+
+helmCharts:
+  - name: cilium
+    repo: https://helm.cilium.io/
+    version: 1.17.0
+    releaseName: cilium
+    namespace: cilium-system
+    includeCRDs: true
+    valuesFile: base/values.yaml
+
+patches:
+  - patch: |-
+      - op: replace
+        path: /spec/type
+        value: LoadBalancer
+    target:
+      version: v1
+      kind: Service
+      name: hubble-ui

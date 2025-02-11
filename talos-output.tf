@@ -1,7 +1,7 @@
 resource "talos_cluster_kubeconfig" "this" {
   depends_on           = [talos_machine_bootstrap.this]
   client_configuration = data.talos_client_configuration.this.client_configuration
-  node                 = cidrhost(var.network_cidr, var.control_plane_first_ip)
+  node                 = local.kubernetes_base_endpoint
 }
 
 resource "local_sensitive_file" "export_talosconfig" {

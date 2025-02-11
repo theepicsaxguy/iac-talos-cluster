@@ -17,7 +17,7 @@ resource "terraform_data" "inline-manifests" {
     },
     {
       name = "cilium-bgp-peering-policy"
-      contents = templatefile("${path.module}/manifests/cilium/bgp-peering-policy.yaml.tpl", {
+      contents = templatefile("${path.module}/manifests/cilium/bgp-cluster-config.yaml.tpl", {
         cilium_asn = var.cilium_asn,
         router_ip  = var.router_ip != "" ? var.router_ip : var.network_gateway,
         router_asn = var.router_asn,
@@ -159,6 +159,22 @@ resource "null_resource" "wait_for_talos_ready" {
     talos_machine_configuration_apply.control-planes,
     talos_machine_configuration_apply.worker-nodes
   ]
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      # Wait for Talos API to be available
+      until talosctl --nodes ${cidrhost(var.network_cidr, var.control_plane_first_ip)} service list; do
+        echo "Waiting for Talos API..."
+        sleep 10
+      done
+
+      # Wait for the Kubernetes API to be available
+      until kubectl cluster-info; do
+        echo "Waiting for Kubernetes API..."
+        sleep 10
+      done
+    EOT
+  }
 }
 
 resource "time_sleep" "wait_after_talos_ready" {
@@ -181,11 +197,3 @@ resource "talos_machine_bootstrap" "this" {
   }
 }
 
-data "talos_cluster_health" "ready" {
-  depends_on = [null_resource.talos-cluster-up]
-
-  client_configuration = talos_machine_secrets.this.client_configuration
-  endpoints            = [for i in range(var.proxmox_servers.host3.control_planes_count) : cidrhost(var.network_cidr, i + var.control_plane_first_ip)]
-  control_plane_nodes  = [for i in range(var.proxmox_servers.host3.control_planes_count) : cidrhost(var.network_cidr, i + var.control_plane_first_ip)]
-  worker_nodes         = [for i in range(length(local.vm_worker_nodes)) : cidrhost(var.network_cidr, i + var.worker_node_first_ip)]
-}
