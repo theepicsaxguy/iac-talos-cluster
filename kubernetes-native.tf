@@ -7,19 +7,6 @@ resource "kubernetes_namespace" "argocd" {
   }
 }
 
-resource "kubernetes_namespace" "cilium_system" {
-  provider = kubernetes.argocd
-
-  metadata {
-    name = "cilium-system"
-    labels = {
-      "pod-security.kubernetes.io/audit"   = "privileged"
-      "pod-security.kubernetes.io/enforce" = "privileged"
-      "pod-security.kubernetes.io/warn"    = "privileged"
-    }
-  }
-}
-
 # Deploy ArgoCD using Helm
 provider "helm" {
   alias = "argocd"
@@ -54,14 +41,12 @@ resource "helm_release" "argocd" {
 
 # Deploy Cilium using Helm
 resource "helm_release" "cilium" {
-  provider   = helm.argocd
-  depends_on = [kubernetes_namespace.cilium_system]
+  provider = helm.argocd
 
   name       = "cilium"
   repository = "https://helm.cilium.io/"
   chart      = "cilium"
   version    = var.cilium_version
-  namespace  = kubernetes_namespace.cilium_system.metadata[0].name
 
   timeout       = 900
   wait          = true
