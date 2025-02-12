@@ -80,7 +80,7 @@ terraform {
     }
     talos = {
       source  = "siderolabs/talos"
-      version = ">= 0.7.5"
+      version = ">= 0.7.0"
     # ">= 0.7.0"
     }
     synclocal = {
@@ -104,9 +104,8 @@ terraform {
     # ">= 2.12.1"
     }
     kubectl = {
-      source  = "gavinbunney/kubectl"
-      version = ">= 1.14.0"
-    # ">= 1.14.0"
-    }
+		  source  = "gavinbunney/kubectl"
+		  version = ">= 1.14.0"
+	}
   }
 }
