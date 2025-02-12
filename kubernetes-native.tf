@@ -1,41 +1,14 @@
-# Wait for the Kubernetes API to be Ready
-resource "null_resource" "wait_for_kubernetes" {
-  provisioner "local-exec" {
-    environment = {
-      KUBECONFIG = "${path.module}/output/kubeconfig"
-    }
-    command = <<-EOT
-      max_retries=60
-      count=0
-
-      until kubectl --kubeconfig=$KUBECONFIG cluster-info; do
-        echo "Waiting for Kubernetes API... (attempt $count/$max_retries)"
-        count=$((count + 1))
-        if [ $count -ge $max_retries ]; then
-          echo "Timeout waiting for Kubernetes API"
-          exit 1
-        fi
-        sleep 5
-      done
-
-      echo "Kubernetes API is ready."
-    EOT
-  }
-}
 
 # Create Namespaces
 resource "kubernetes_namespace" "argocd" {
-  provider   = kubernetes.argocd
-  depends_on = [null_resource.wait_for_kubernetes]
-
+  provider = kubernetes.argocd
   metadata {
     name = "argocd"
   }
 }
 
 resource "kubernetes_namespace" "cilium_system" {
-  provider   = kubernetes.argocd
-  depends_on = [null_resource.wait_for_kubernetes]
+  provider = kubernetes.argocd
 
   metadata {
     name = "cilium-system"
@@ -49,7 +22,7 @@ resource "kubernetes_namespace" "cilium_system" {
 
 # Deploy ArgoCD using Helm
 provider "helm" {
-  alias       = "argocd"
+  alias = "argocd"
   kubernetes {
     config_path = "${path.module}/output/kubeconfig"
   }

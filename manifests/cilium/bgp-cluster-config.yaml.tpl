@@ -1,11 +1,12 @@
-# https://docs.cilium.io/en/latest/network/bgp-control-plane/
+# https://docs.cilium.io/en/v1.14/network/bgp-control-plane/
 ---
-apiVersion: cilium.io/v2alpha1
-kind: CiliumBGPClusterConfig
+apiVersion: "cilium.io/v2alpha1"
+kind: CiliumBGPPeeringPolicy
 metadata:
   name: default
   namespace: cilium-system
 spec:
+  # Nodes which are selected by this label selector will apply the given policy
   nodeSelector:
     matchLabels:
       cilium/bgp-peering-policy: default
@@ -15,19 +16,13 @@ spec:
       neighbors:
         - peerAddress: ${router_ip}/32
           peerASN: ${router_asn}
-          ebgpMultihop:
+          eBGPMultihopTTL: 10
+          connectRetryTimeSeconds: 120
+          holdTimeSeconds: 90
+          keepAliveTimeSeconds: 30
+          gracefulRestart:
             enabled: true
-            ttl: 10
-          timers:
-            connectRetry: 120s
-            holdTime: 90s
-            keepAlive: 30s
-            gracefulRestart:
-              enabled: true
-              restartTime: 120s
+            restartTimeSeconds: 120
       serviceSelector:
         matchExpressions:
-          - key: somekey
-            operator: NotIn
-            values:
-              - never-used-value
+          - { key: somekey, operator: NotIn, values: [ 'never-used-value' ] }

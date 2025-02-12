@@ -12,7 +12,7 @@ resource "synclocal_url" "talos_ccm_manifest" {
 
 data "external" "kustomize_talos-ccm" {
   depends_on = [synclocal_url.talos_ccm_manifest]
-  program    = [
+  program = [
     "go",
     "run",
     "${path.module}/cmd/kustomize",
@@ -24,14 +24,14 @@ data "external" "kustomize_talos-ccm" {
 # kustomize cilium manifests
 resource "local_file" "cilium_kustomization" {
   filename = "${path.module}/manifests/cilium/base/kustomization.yaml"
-  content  = templatefile("${path.module}/manifests/cilium/base/kustomization.yaml.tpl", {
+  content = templatefile("${path.module}/manifests/cilium/base/kustomization.yaml.tpl", {
     cilium_version = var.cilium_version
   })
 }
 
 data "external" "kustomize_cilium" {
   depends_on = [local_file.cilium_kustomization]
-  program    = [
+  program = [
     "go",
     "run",
     "${path.module}/cmd/kustomize",
