@@ -1,16 +1,3 @@
-resource "terraform_data" "bootstrap_manifests" {
-  input = [
-    {
-      name     = "talos-ccm"
-      contents = file("${path.module}/manifests/talos-ccm/talos-ccm.yaml")
-    },
-    {
-      name     = "cilium"
-      contents = file("${path.module}/manifests/cilium/base/kustomization.yaml")
-    }
-  ]
-}
-
 resource "talos_machine_configuration_apply" "control-planes" {
   depends_on = [
     data.external.mac-to-ip,
@@ -22,44 +9,52 @@ resource "talos_machine_configuration_apply" "control-planes" {
   }
 
   client_configuration = talos_machine_secrets.this.client_configuration
-  node                 = cidrhost(var.network_cidr, each.key + var.control_plane_first_ip)
-  machine_configuration_input = yamlencode({
-    machine = {
-      type = "controlplane"
-      network = {
-        hostname = "${var.control_plane_name_prefix}-${each.key + 1}"
-        interfaces = [{
-          interface = "enx${lower(replace(macaddress.talos-control-plane[each.key].address, ":", ""))}"
-          addresses = ["${cidrhost(var.network_cidr, each.key + var.control_plane_first_ip)}/${var.network_ip_prefix}"]
-          routes = [{
-            network = "0.0.0.0/0"
-            gateway = var.network_gateway
+  node                 = data.external.mac-to-ip.result["ip${each.key}"]
+  machine_configuration_input = yamlencode(merge(
+    yamldecode(data.talos_machine_configuration.cp.machine_configuration),
+    {
+      machine = {
+        type = "controlplane"
+        certSANs = [local.cluster_endpoint]
+        ca = base64encode(talos_machine_secrets.this.client_configuration.ca_certificate)
+        acceptedCAs = [
+          base64encode(talos_machine_secrets.this.client_configuration.ca_certificate)
+        ]
+        network = {
+          hostname = "${var.control_plane_name_prefix}-${each.key + 1}"
+          interfaces = [{
+            interface = "enx${lower(replace(macaddress.talos-control-plane[each.key].address, ":", ""))}"
+            addresses = ["${cidrhost(var.network_cidr, each.key + var.control_plane_first_ip)}/${var.network_ip_prefix}"]
+            routes = [{
+              network = "0.0.0.0/0"
+              gateway = var.network_gateway
+            }]
           }]
-        }]
-      }
-      kubelet = {
-        extraArgs = {
-          "node-ip" = cidrhost(var.network_cidr, each.key + var.control_plane_first_ip)
+        }
+        install = {
+          disk = var.install_disk_device
+        }
+        kubelet = {
+          extraArgs = {
+            "node-ip" = cidrhost(var.network_cidr, each.key + var.control_plane_first_ip)
+          }
         }
       }
-      install = {
-        extensions = []
+      cluster = {
+        id = 1
+        secret = talos_machine_secrets.this.machine_secrets.cluster.secret
+        controlPlane = {
+          endpoint = "https://${local.cluster_endpoint}:6443"
+        }
+        clusterName = var.cluster_name
+        network = {
+          dnsDomain = var.cluster_domain
+          podSubnets = ["10.244.0.0/16"]
+          serviceSubnets = ["10.96.0.0/12"]
+        }
       }
     }
-    cluster = {
-      apiServer = {
-        certSANs = [local.cluster_endpoint]
-      }
-      controllerManager = {}
-      scheduler         = {}
-      network = {
-        dnsDomain      = var.cluster_domain
-        podSubnets     = ["10.244.0.0/16"]
-        serviceSubnets = ["10.96.0.0/12"]
-      }
-      bootstrapManifests = terraform_data.bootstrap_manifests.output
-    }
-  })
+  ))
 }
 
 resource "time_sleep" "wait_after_control_planes" {
@@ -79,59 +74,79 @@ resource "talos_machine_configuration_apply" "worker-nodes" {
   }
 
   client_configuration = talos_machine_secrets.this.client_configuration
-  node                 = cidrhost(var.network_cidr, each.key + var.worker_node_first_ip)
-  machine_configuration_input = yamlencode({
-    machine = {
-      type = "worker"
-      network = {
-        hostname = "${var.worker_node_name_prefix}-${each.key + 1}"
-        interfaces = [{
-          interface = "enx${lower(replace(macaddress.talos-worker-node[each.key].address, ":", ""))}"
-          addresses = ["${cidrhost(var.network_cidr, each.key + var.worker_node_first_ip)}/${var.network_ip_prefix}"]
-          routes = [{
-            network = "0.0.0.0/0"
-            gateway = var.network_gateway
+  node                 = data.external.mac-to-ip.result["ip${length(local.vm_control_planes) + each.key}"]
+  machine_configuration_input = yamlencode(merge(
+    yamldecode(data.talos_machine_configuration.wn.machine_configuration),
+    {
+      machine = {
+        type = "worker"
+        ca = base64encode(talos_machine_secrets.this.client_configuration.ca_certificate)
+        acceptedCAs = [
+          base64encode(talos_machine_secrets.this.client_configuration.ca_certificate)
+        ]
+        certSANs = [local.cluster_endpoint]
+        network = {
+          hostname = "${var.worker_node_name_prefix}-${each.key + 1}"
+          interfaces = [{
+            interface = "enx${lower(replace(macaddress.talos-worker-node[each.key].address, ":", ""))}"
+            addresses = ["${cidrhost(var.network_cidr, each.key + var.worker_node_first_ip)}/${var.network_ip_prefix}"]
+            routes = [{
+              network = "0.0.0.0/0"
+              gateway = var.network_gateway
+            }]
           }]
-        }]
-      }
-      kubelet = {
-        extraArgs = {
-          "node-ip" = cidrhost(var.network_cidr, each.key + var.worker_node_first_ip)
+        }
+        install = {
+          disk = var.install_disk_device
         }
       }
-      install = {
-        extensions = []
+      cluster = {
+        secret = talos_machine_secrets.this.machine_secrets.cluster.secret
+        controlPlane = {
+          endpoint = "https://${local.cluster_endpoint}:6443"
+        }
+        clusterName = var.cluster_name
+        network = {
+          dnsDomain = var.cluster_domain
+          podSubnets = ["10.244.0.0/16"]
+          serviceSubnets = ["10.96.0.0/12"]
+        }
       }
     }
-    cluster = {
-      discovery = {
-        enabled = true
-      }
-      network = {
-        dnsDomain      = var.cluster_domain
-        podSubnets     = ["10.244.0.0/16"]
-        serviceSubnets = ["10.96.0.0/12"]
-      }
-    }
-  })
+  ))
 }
 
-resource "null_resource" "wait_for_talos_ready" {
+resource "talos_machine_bootstrap" "this" {
   depends_on = [
     talos_machine_configuration_apply.control-planes,
     talos_machine_configuration_apply.worker-nodes
   ]
 
+  client_configuration = talos_machine_secrets.this.client_configuration
+  node                 = data.external.mac-to-ip.result["ip0"]
+}
+
+resource "time_sleep" "wait_after_bootstrap" {
+  depends_on      = [talos_machine_bootstrap.this]
+  create_duration = "2m"
+}
+
+resource "null_resource" "wait_for_talos_ready" {
+  depends_on = [
+    time_sleep.wait_after_bootstrap,
+    local_sensitive_file.export_kubeconfig
+  ]
+
   provisioner "local-exec" {
     command = <<-EOT
-      # Wait for Talos API to be available
-      until talosctl --nodes ${cidrhost(var.network_cidr, var.control_plane_first_ip)} service list; do
+      # Wait for Talos API to be available using discovered IP
+      until talosctl --nodes ${data.external.mac-to-ip.result["ip0"]} service list; do
         echo "Waiting for Talos API..."
         sleep 10
       done
 
       # Wait for the Kubernetes API to be available
-      until kubectl cluster-info; do
+      until KUBECONFIG=${path.module}/output/kubeconfig kubectl cluster-info; do
         echo "Waiting for Kubernetes API..."
         sleep 10
       done
@@ -139,26 +154,9 @@ resource "null_resource" "wait_for_talos_ready" {
   }
 }
 
-resource "time_sleep" "wait_after_talos_ready" {
-  depends_on      = [null_resource.wait_for_talos_ready]
-  create_duration = "2m"
-}
-
-resource "talos_machine_bootstrap" "this" {
-  depends_on = [
-    time_sleep.wait_after_talos_ready
-  ]
-
-  client_configuration = talos_machine_secrets.this.client_configuration
-  node                 = cidrhost(var.network_cidr, var.control_plane_first_ip)
-
-}
-
 resource "terraform_data" "post_bootstrap_manifests" {
   depends_on = [
-    talos_cluster_kubeconfig.this,
-    data.kustomization_build.talos_ccm,
-    data.kustomization_build.cilium
+    null_resource.wait_for_talos_ready
   ]
 
   input = [
@@ -207,4 +205,3 @@ resource "null_resource" "apply_manifests" {
     EOT
   }
 }
-

@@ -37,3 +37,7 @@ provider "helm" {
     cluster_ca_certificate = base64decode(talos_machine_secrets.this.client_configuration.ca_certificate)
   }
 }
+
+resource "null_resource" "providers_dependency" {
+  depends_on = [null_resource.talos-cluster-up]
+}

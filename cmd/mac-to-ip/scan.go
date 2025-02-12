@@ -7,18 +7,57 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"github.com/go-pogo/errors"
 	"os/exec"
 	"strings"
+	"time"
+
+	"github.com/go-pogo/errors"
 )
 
 const (
-	foundHost = "Nmap scan report for "
-	foundMac  = "MAC Address: "
+	foundHost  = "Nmap scan report for "
+	foundMac   = "MAC Address: "
+	maxRetries = 5
+	retryDelay = 10 * time.Second
 )
 
 func scanSubnet(cidr []string, targetMacs []string) (map[string]string, error) {
-	b, err := exec.Command("nmap", append([]string{"-sn"}, cidr...)...).Output()
+	var result map[string]string
+	var err error
+
+	for i := 0; i < maxRetries; i++ {
+		result, err = doScan(cidr, targetMacs)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		// Check if we found all target MACs
+		allFound := true
+		for _, mac := range targetMacs {
+			if _, found := result[strings.ToLower(mac)]; !found {
+				allFound = false
+				break
+			}
+		}
+
+		if allFound {
+			return result, nil
+		}
+
+		// Not all MACs found, wait and retry
+		time.Sleep(retryDelay)
+	}
+
+	return result, nil
+}
+
+func doScan(cidr []string, targetMacs []string) (map[string]string, error) {
+	// Use -T4 for faster timing, --min-rate to ensure minimum packet rate,
+	// --max-retries for reliability with slow responses
+	args := []string{"-sn", "-T4", "--min-rate=300", "--max-retries=3"}
+	args = append(args, cidr...)
+
+	b, err := exec.Command("nmap", args...).Output()
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -29,26 +68,24 @@ func scanSubnet(cidr []string, targetMacs []string) (map[string]string, error) {
 	hasTargets := len(targetMacs) > 0
 	result := make(map[string]string)
 
-	var foundHostLine string
+	var currentIP string
 	for scan.Scan() {
 		line := scan.Text()
-		if strings.HasPrefix(line, foundHost) {
-			foundHostLine = line
-			continue
+		if strings.Contains(line, foundHost) {
+			parts := strings.Split(line, " ")
+			currentIP = strings.Trim(parts[len(parts)-1], "()")
+			// Handle hostnames by taking the IP in parentheses if present
+			if strings.Contains(currentIP, "(") {
+				currentIP = strings.Trim(strings.Split(currentIP, "(")[1], ")")
+			}
+		} else if strings.Contains(line, foundMac) {
+			parts := strings.Split(line, " ")
+			mac := strings.ToLower(parts[2])
+			if hasTargets && !contains(targetMacs, mac) {
+				continue
+			}
+			result[mac] = currentIP
 		}
-		if !strings.HasPrefix(line, foundMac) {
-			continue
-		}
-
-		line = strings.TrimPrefix(line, foundMac)
-		line = strings.SplitN(line, " ", 2)[0]
-		line = strings.ToLower(line)
-		if hasTargets && !contains(targetMacs, line) {
-			continue
-		}
-
-		foundHostLine = strings.TrimPrefix(foundHostLine, foundHost)
-		result[line] = foundHostLine // macaddr => ip
 	}
 
 	return result, nil
@@ -56,7 +93,7 @@ func scanSubnet(cidr []string, targetMacs []string) (map[string]string, error) {
 
 func contains(list []string, str string) bool {
 	for _, test := range list {
-		if test == str {
+		if strings.EqualFold(test, str) {
 			return true
 		}
 	}

@@ -7,25 +7,46 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"github.com/go-pogo/errors"
-	"os"
+	"fmt"
+	"log"
 	"strings"
 )
 
 func main() {
-	subnet := "10.25.150.1/24"
+	subnet := flag.String("subnet", "", "Subnet to scan in CIDR notation")
+	flag.Parse()
 
-	fs := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
-	fs.StringVar(&subnet, "subnet", subnet, "subnet(s) (cidr) to scan (comma separated list)")
-	errors.FatalOnErr(fs.Parse(os.Args[1:]))
+	if *subnet == "" {
+		log.Fatal("subnet parameter is required")
+	}
 
-	res, err := scanSubnet(strings.Split(subnet, ","), fs.Args())
-	errors.FatalOnErr(err)
+	macs := flag.Args()
+	if len(macs) == 0 {
+		log.Fatal("at least one MAC address must be provided")
+	}
 
-	// wanneer res < args, vraag om input?
-	// of arp -a | grep mac via proxmox host
+	// Get MAC to IP mapping
+	macToIP, err := scanSubnet(strings.Split(*subnet, ","), macs)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	out, err := json.Marshal(res)
-	errors.FatalOnErr(err)
-	_, _ = os.Stdout.Write(out)
+	// Build result map for Terraform
+	result := make(map[string]string)
+	for i, mac := range macs {
+		mac = strings.ToLower(mac)
+		if ip, ok := macToIP[mac]; ok {
+			result[fmt.Sprintf("ip%d", i)] = ip
+		} else {
+			log.Printf("Warning: No IP found for MAC %s", mac)
+			result[fmt.Sprintf("ip%d", i)] = ""
+		}
+	}
+
+	// Output JSON for Terraform
+	json, err := json.Marshal(result)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Print(string(json))
 }
