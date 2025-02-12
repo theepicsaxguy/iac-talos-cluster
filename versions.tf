@@ -100,6 +100,6 @@ terraform {
 }
 
 # Provider configurations (moved outside)
-provider "helm" {
-  alias   = "argocd"
-}
+#provider "helm" {
+#  alias   = "argocd"
+#}

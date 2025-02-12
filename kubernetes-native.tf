@@ -1,50 +1,13 @@
-# Define the Kubernetes provider with a conditional configuration
-provider "kubernetes" {
-  alias       = "argocd"
-  config_path = fileexists("${path.module}/output/kubeconfig") ? "${path.module}/output/kubeconfig" : ""
-}
-
-# Ensure the kubeconfig file is present before applying Kubernetes resources
-resource "null_resource" "kubeconfig_ready" {
-  depends_on = [null_resource.wait_for_kubernetes]
-
-  provisioner "local-exec" {
-    command = "test -f ${path.module}/output/kubeconfig"
-  }
-}
-
-# Wait for the Kubernetes API to be fully ready
+# Wait for the Kubernetes API to be Ready
 resource "null_resource" "wait_for_kubernetes" {
-  depends_on = [
-    talos_machine_bootstrap.this,
-    data.external.copy_kubeconfig,
-    talos_cluster_kubeconfig.this
-  ]
-
   provisioner "local-exec" {
     environment = {
-      KUBECONFIG  = "${path.module}/output/kubeconfig"
-      TALOSCONFIG = "${path.module}/output/talosconfig"
+      KUBECONFIG = "${path.module}/output/kubeconfig"
     }
     command = <<-EOT
       max_retries=60
       count=0
 
-      # First ensure Talos API is ready
-      until talosctl --talosconfig=$TALOSCONFIG --nodes ${local.kubernetes_base_endpoint} version; do
-        echo "Waiting for Talos API... (attempt $count/$max_retries)"
-        count=$((count + 1))
-        if [ $count -ge $max_retries ]; then
-          echo "Timeout waiting for Talos API"
-          exit 1
-        fi
-        sleep 5
-      done
-
-      # Reset counter for Kubernetes API check
-      count=0
-
-      # Then wait for Kubernetes API
       until kubectl --kubeconfig=$KUBECONFIG cluster-info; do
         echo "Waiting for Kubernetes API... (attempt $count/$max_retries)"
         count=$((count + 1))
@@ -55,26 +18,24 @@ resource "null_resource" "wait_for_kubernetes" {
         sleep 5
       done
 
-      echo "Waiting for essential Kubernetes components..."
-      kubectl --kubeconfig=$KUBECONFIG -n kube-system wait pod --for=condition=Ready --all --timeout=300s
+      echo "Kubernetes API is ready."
     EOT
   }
 }
 
-# Create the ArgoCD namespace
+# Create Namespaces
 resource "kubernetes_namespace" "argocd" {
   provider   = kubernetes.argocd
-  depends_on = [null_resource.kubeconfig_ready]
+  depends_on = [null_resource.wait_for_kubernetes]
 
   metadata {
     name = "argocd"
   }
 }
 
-# Create the Cilium namespace
 resource "kubernetes_namespace" "cilium_system" {
   provider   = kubernetes.argocd
-  depends_on = [null_resource.kubeconfig_ready]
+  depends_on = [null_resource.wait_for_kubernetes]
 
   metadata {
     name = "cilium-system"
@@ -87,6 +48,13 @@ resource "kubernetes_namespace" "cilium_system" {
 }
 
 # Deploy ArgoCD using Helm
+provider "helm" {
+  alias       = "argocd"
+  kubernetes {
+    config_path = "${path.module}/output/kubeconfig"
+  }
+}
+
 resource "helm_release" "argocd" {
   provider   = helm.argocd
   depends_on = [kubernetes_namespace.argocd]
@@ -102,12 +70,7 @@ resource "helm_release" "argocd" {
     value = "LoadBalancer"
   }
 
-  set {
-    name  = "configs.cm.kustomize\\.enabled"
-    value = "true"
-  }
-
-  timeout       = 900 # 15 minutes
+  timeout       = 900
   wait          = true
   wait_for_jobs = true
 
@@ -127,7 +90,7 @@ resource "helm_release" "cilium" {
   version    = var.cilium_version
   namespace  = kubernetes_namespace.cilium_system.metadata[0].name
 
-  timeout       = 900 # 15 minutes
+  timeout       = 900
   wait          = true
   wait_for_jobs = true
 
@@ -136,46 +99,27 @@ resource "helm_release" "cilium" {
   ]
 }
 
-# Wait for CRDs to be ready before applying Application resources
-resource "time_sleep" "wait_for_crds" {
+# Apply ArgoCD Applications
+resource "kubectl_manifest" "argocd_applications" {
+  provider   = kubectl.argocd
   depends_on = [helm_release.argocd]
-
-  create_duration = "30s"
-}
-
-# Configure ArgoCD Applications
-resource "kubernetes_manifest" "argocd_applications" {
-  provider   = kubernetes.argocd
-  depends_on = [time_sleep.wait_for_crds]
 
   for_each = {
     for f in fileset(path.module, "manifests/apps/*.yaml") : basename(f) => f
     if !endswith(f, "kustomization.yaml") && fileexists(f)
   }
 
-  manifest = yamldecode(file(each.value))
-
-  timeouts {
-    create = "5m"
-    update = "5m"
-    delete = "5m"
-  }
-
-  wait {
-    fields = {
-      "status.sync.status" = "Synced"
-    }
-  }
+  yaml_body = file(each.value)
 }
 
-# Configure Cilium BGP Cluster
-resource "kubernetes_manifest" "cilium_bgp_cluster_config" {
-  provider   = kubernetes.argocd
+# Apply Cilium BGP Cluster Configuration
+resource "kubectl_manifest" "cilium_bgp_cluster_config" {
+  provider   = kubectl.argocd
   depends_on = [helm_release.cilium]
 
-  manifest = yamldecode(templatefile("${path.module}/manifests/cilium/bgp-cluster-config.yaml.tpl", {
+  yaml_body = templatefile("${path.module}/manifests/cilium/bgp-cluster-config.yaml.tpl", {
     cilium_asn = var.cilium_asn,
     router_ip  = var.router_ip != "" ? var.router_ip : var.network_gateway,
     router_asn = var.router_asn,
-  }))
+  })
 }
