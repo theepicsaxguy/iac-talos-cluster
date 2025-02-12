@@ -20,7 +20,6 @@ resource "macaddress" "talos-worker-node" {
 
 resource "proxmox_virtual_environment_vm" "talos-worker-node" {
   depends_on = [
-    #     proxmox_virtual_environment_file.talos-iso,
     macaddress.talos-worker-node
   ]
   for_each = {
@@ -37,20 +36,9 @@ resource "proxmox_virtual_environment_vm" "talos-worker-node" {
     enabled = true
   }
 
-  initialization {
-    datastore_id = var.proxmox_servers[each.value.target_server].disk_storage_pool
-    ip_config {
-      ipv4 {
-        address = "${cidrhost(var.network_cidr, each.key + var.worker_node_first_ip)}/${split("/", var.network_cidr)[1]}"
-        gateway = var.network_gateway
-      }
-    }
-  }
-
   cdrom {
     file_id = local.talos_iso_image_location
   }
-
 
   cpu {
     type    = "host"

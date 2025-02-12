@@ -7,14 +7,6 @@ resource "kubernetes_namespace" "argocd" {
   }
 }
 
-# Deploy ArgoCD using Helm
-provider "helm" {
-  alias = "argocd"
-  kubernetes {
-    config_path = "${path.module}/output/kubeconfig"
-  }
-}
-
 resource "helm_release" "argocd" {
   provider   = helm.argocd
   depends_on = [kubernetes_namespace.argocd]

@@ -13,3 +13,4 @@ manifests/cilium/base/charts/cilium-1.17.0/
 .aider*
 .env
 .manifests_old/
+docs/

@@ -30,7 +30,6 @@ resource "macaddress" "talos-control-plane" {
 
 resource "proxmox_virtual_environment_vm" "talos-control-plane" {
   depends_on = [
-    #     proxmox_virtual_environment_file.talos-iso,
     macaddress.talos-control-plane
   ]
   for_each = {
@@ -47,20 +46,9 @@ resource "proxmox_virtual_environment_vm" "talos-control-plane" {
     enabled = true
   }
 
-  initialization {
-    datastore_id = var.proxmox_servers[each.value].disk_storage_pool
-    ip_config {
-      ipv4 {
-        address = "${cidrhost(var.network_cidr, each.key + var.control_plane_first_ip)}/${split("/", var.network_cidr)[1]}"
-        gateway = var.network_gateway
-      }
-    }
-  }
-
   cdrom {
     file_id = local.talos_iso_image_location
   }
-
 
   cpu {
     type    = "host"

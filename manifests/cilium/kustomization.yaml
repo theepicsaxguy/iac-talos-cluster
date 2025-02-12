@@ -1,4 +1,13 @@
-namespace: cilium-system
 resources:
   - base
   - high-priority-scheduling.yaml
+
+patches:
+  - patch: |-
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: cilium-system
+    target:
+      kind: Namespace
+      name: cilium-system

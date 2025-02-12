@@ -33,6 +33,8 @@ hubble:
     enabled: true
   ui:
     enabled: true
+    standalone:
+      enabled: false
 
 ipam:
   mode: kubernetes
@@ -47,3 +49,14 @@ cgroup:
   autoMount:
     enabled: false
   hostRoot: /sys/fs/cgroup
+
+# Ensure consistent namespace usage
+ingressController:
+  secretsNamespace:
+    name: cilium-system
+envoyConfig:
+  secretsNamespace:
+    name: cilium-system
+gatewayAPI:
+  secretsNamespace:
+    name: cilium-system

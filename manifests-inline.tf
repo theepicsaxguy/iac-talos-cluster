@@ -10,38 +10,47 @@ resource "synclocal_url" "talos_ccm_manifest" {
   filename = "${path.module}/manifests/talos-ccm/talos-ccm.yaml"
 }
 
-data "external" "kustomize_talos-ccm" {
+data "kustomization_build" "talos_ccm" {
   depends_on = [synclocal_url.talos_ccm_manifest]
-  program = [
-    "go",
-    "run",
-    "${path.module}/cmd/kustomize",
-    "--",
-    "${path.module}/manifests/talos-ccm",
-  ]
+  path       = "${path.module}/manifests/talos-ccm"
 }
 
 # kustomize cilium manifests
 resource "local_file" "cilium_kustomization" {
-  filename = "${path.module}/manifests/cilium/base/kustomization.yaml"
   content = templatefile("${path.module}/manifests/cilium/base/kustomization.yaml.tpl", {
     cilium_version = var.cilium_version
   })
+  filename = "${path.module}/manifests/cilium/base/kustomization.yaml"
 }
 
-data "external" "kustomize_cilium" {
+data "kustomization_build" "cilium" {
   depends_on = [local_file.cilium_kustomization]
-  program = [
-    "go",
-    "run",
-    "${path.module}/cmd/kustomize",
-    "--",
-    "--enable-helm",
-    "${path.module}/manifests/cilium",
+  path       = "${path.module}/manifests/cilium"
+  kustomize_options {
+    enable_helm = true
+    helm_path   = "helm" # Assuming helm is available in PATH, adjust if needed
+  }
+}
+
+resource "terraform_data" "inline-manifests" {
+  depends_on = [
+    data.kustomization_build.talos_ccm,
+    data.kustomization_build.cilium
+  ]
+
+  input = [
+    {
+      name     = "talos-ccm"
+      contents = data.kustomization_build.talos_ccm.manifests
+    },
+    {
+      name     = "cilium"
+      contents = data.kustomization_build.cilium.manifests
+    }
   ]
 }
 
-resource "local_file" "export_inline-manifests" {
+resource "local_file" "export_inline_manifests" {
   depends_on = [terraform_data.inline-manifests]
   content    = yamlencode(terraform_data.inline-manifests.output)
   filename   = "${path.module}/output/inline-manifests.yaml"
