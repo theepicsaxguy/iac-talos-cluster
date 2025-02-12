@@ -49,63 +49,61 @@ variable "metrics_server_version" {
   type        = string
   default     = "0.7.2"
 }
-
 terraform {
   required_version = ">= 1.0"
   required_providers {
     time = {
       source  = "hashicorp/time"
       version = ">= 0.9.1"
-    # ">= 0.7.2"
     }
     external = {
       source  = "hashicorp/external"
       version = ">= 2.2.3"
-    # ">= 2.2.2"
     }
     null = {
       source  = "hashicorp/null"
       version = ">= 3.2.2"
-    # ">= 3.2.1"
     }
     local = {
       source  = "hashicorp/local"
       version = ">= 2.4.0"
-    # ">= 2.4.0"
     }
     proxmox = {
       source  = "bpg/proxmox"
       version = ">= 0.70.1"
-    # ">= 0.70.1"
     }
     talos = {
       source  = "siderolabs/talos"
       version = ">= 0.7.0"
-    # ">= 0.7.0"
     }
     synclocal = {
       source  = "justenwalker/synclocal"
       version = ">= 0.0.2"
-    # ">= 0.0.2"
     }
     macaddress = {
       source  = "ivoronin/macaddress"
       version = ">= 0.3.2"
-    # "0.3.2"
     }
     kubernetes = {
       source  = "hashicorp/kubernetes"
       version = ">= 2.30.0"
-    # ">= 2.35.1"
     }
     helm = {
       source  = "hashicorp/helm"
       version = ">= 2.13.2"
-    # ">= 2.12.1"
     }
     kubectl = {
-		  source  = "gavinbunney/kubectl"
-		  version = ">= 1.14.0"
-	}
+      source  = "gavinbunney/kubectl"
+      version = ">= 1.14.0"
+    }
   }
+}
+
+# Provider configurations (moved outside)
+provider "helm" {
+  alias   = "argocd"
+}
+
+provider "kubernetes" {
+  alias   = "argocd"
 }
