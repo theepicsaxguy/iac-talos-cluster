@@ -103,7 +103,3 @@ terraform {
 provider "helm" {
   alias   = "argocd"
 }
-
-provider "kubernetes" {
-  alias   = "argocd"
-}
