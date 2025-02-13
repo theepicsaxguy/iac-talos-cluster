@@ -9,8 +9,8 @@
 #}
 
 data "http" "talos_health" {
-  count    = var.control_plane_count > 0 ? 1 : 0
-  url      = "https://${local.control_plane_public_ipv4_list[0]}:${local.api_port_k8s}/version"
+  count    = proxmox_servers.control_plane_count > 0 ? 1 : 0
+  url      = "https://${local.control_plane_public_ipv4_list[0]}:${cluster_endpoint_port}/version"
   insecure = true
   retry {
     attempts     = 60
