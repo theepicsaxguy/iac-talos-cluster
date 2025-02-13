@@ -11,32 +11,34 @@ provider "proxmox" {
 }
 
 provider "kubernetes" {
-  alias       = "argocd"
-  config_path = fileexists("${path.module}/output/kubeconfig") ? "${path.module}/output/kubeconfig" : null
-}
-
-provider "kubectl" {
-  alias                  = "argocd"
-  host                   = jsondecode(talos_cluster_kubeconfig.this.kubeconfig_raw)["clusters"][0]["cluster"]["server"]
-  cluster_ca_certificate = base64decode(talos_machine_secrets.this.client_configuration.ca_certificate)
-  client_certificate     = base64decode(talos_machine_secrets.this.client_configuration.client_certificate)
-  client_key             = base64decode(talos_machine_secrets.this.client_configuration.client_key)
+  alias = "argocd"
+  host                   = local.kubeconfig_data.host
+  client_certificate     = local.kubeconfig_data.client_certificate
+  client_key             = local.kubeconfig_data.client_key
+  cluster_ca_certificate = local.kubeconfig_data.cluster_ca_certificate
   load_config_file       = false
 }
 
-provider "kustomization" {
-  kubeconfig_raw = talos_cluster_kubeconfig.this.kubeconfig_raw
+provider "kubectl" {
+  alias = "argocd"
+  host                   = local.kubeconfig_data.host
+  client_certificate     = local.kubeconfig_data.client_certificate
+  client_key             = local.kubeconfig_data.client_key
+  cluster_ca_certificate = local.kubeconfig_data.cluster_ca_certificate
+  load_config_file       = false
+  apply_retry_count      = 3
 }
 
 provider "helm" {
   alias = "argocd"
   kubernetes {
-    host                   = local.kubernetes_endpoint
-    client_certificate     = base64decode(talos_machine_secrets.this.client_configuration.client_certificate)
-    client_key             = base64decode(talos_machine_secrets.this.client_configuration.client_key)
-    cluster_ca_certificate = base64decode(talos_machine_secrets.this.client_configuration.ca_certificate)
+    host                   = local.kubeconfig_data.host
+    client_certificate     = local.kubeconfig_data.client_certificate
+    client_key             = local.kubeconfig_data.client_key
+    cluster_ca_certificate = local.kubeconfig_data.cluster_ca_certificate
   }
 }
+
 provider "helm" {
   kubernetes {
     host                   = local.kubeconfig_data.host
@@ -46,15 +48,27 @@ provider "helm" {
   }
 }
 
-provider "kubectl" {
+provider "kustomization" {
   host                   = local.kubeconfig_data.host
   client_certificate     = local.kubeconfig_data.client_certificate
   client_key             = local.kubeconfig_data.client_key
   cluster_ca_certificate = local.kubeconfig_data.cluster_ca_certificate
-  load_config_file       = false
-  apply_retry_count      = 3
 }
 
+# This resource ensures all providers have a working cluster before proceeding
 resource "null_resource" "providers_dependency" {
   depends_on = [null_resource.talos-cluster-up]
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      for i in {1..30}; do
+        if curl -k --fail --max-time 5 ${local.kubernetes_endpoint}/healthz; then
+          exit 0
+        fi
+        sleep 10
+      done
+      echo "Timed out waiting for cluster API" >&2
+      exit 1
+    EOT
+  }
 }

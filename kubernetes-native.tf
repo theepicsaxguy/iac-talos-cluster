@@ -1,15 +1,22 @@
-
 # Create Namespaces
 resource "kubernetes_namespace" "argocd" {
-  provider = kubernetes.argocd
+  depends_on = [
+    null_resource.providers_dependency,
+    talos_cluster_kubeconfig.this  # Ensure kubeconfig is available first
+  ]
+  provider   = kubernetes.argocd
   metadata {
     name = "argocd"
   }
 }
 
 resource "helm_release" "argocd" {
-  provider   = helm.argocd
-  depends_on = [kubernetes_namespace.argocd]
+  provider = helm.argocd
+  depends_on = [
+    kubernetes_namespace.argocd,
+    null_resource.providers_dependency,
+    talos_cluster_kubeconfig.this  # Ensure kubeconfig is available first
+  ]
 
   name       = "argocd"
   repository = "https://argoproj.github.io/argo-helm"
@@ -31,11 +38,17 @@ resource "helm_release" "argocd" {
   ]
 }
 
-# Deploy Cilium using Helm
+# Deploy Cilium using Helm - must wait for cluster to be ready
 resource "helm_release" "cilium" {
   provider = helm.argocd
+  depends_on = [
+    null_resource.providers_dependency,
+    talos_cluster_kubeconfig.this,  # Ensure kubeconfig is available first
+    helm_release.argocd
+  ]
 
   name       = "cilium"
+  namespace  = "kube-system"
   repository = "https://helm.cilium.io/"
   chart      = "cilium"
   version    = var.cilium_version
@@ -49,10 +62,14 @@ resource "helm_release" "cilium" {
   ]
 }
 
-# Apply ArgoCD Applications
+# Apply ArgoCD Applications - must wait for ArgoCD and Cilium
 resource "kubectl_manifest" "argocd_applications" {
-  provider   = kubectl.argocd
-  depends_on = [helm_release.argocd]
+  provider = kubectl.argocd
+  depends_on = [
+    helm_release.argocd,
+    helm_release.cilium,
+    talos_cluster_kubeconfig.this  # Ensure kubeconfig is available first
+  ]
 
   for_each = {
     for f in fileset(path.module, "manifests/apps/*.yaml") : basename(f) => f
@@ -65,7 +82,10 @@ resource "kubectl_manifest" "argocd_applications" {
 # Apply Cilium BGP Cluster Configuration
 resource "kubectl_manifest" "cilium_bgp_cluster_config" {
   provider   = kubectl.argocd
-  depends_on = [helm_release.cilium]
+  depends_on = [
+    helm_release.cilium,
+    talos_cluster_kubeconfig.this  # Ensure kubeconfig is available first
+  ]
 
   yaml_body = templatefile("${path.module}/manifests/cilium/bgp-cluster-config.yaml.tpl", {
     cilium_asn = var.cilium_asn,

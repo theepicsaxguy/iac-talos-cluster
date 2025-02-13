@@ -51,6 +51,5 @@ https://factory.talos.dev/image/88d1f7a5c4f1d3aba7df787c448c1d3d008ed29cfb34af53
 # Restart
 In proxmox:
 for id in 8101 8102 8103 8201 8202 8203; do qm stop $id && qm destroy $id; done
-
 In terraform:
-rm -rf terraform.tfstate terraform.tfstate.backup .terraform/ output/inline-manifests.yaml output/kubeconfig output/talosconfig .terraform.lock.hcl .terraformr ~/.kube/*
+rm -rf terraform.tfstate terraform.tfstate.backup .terraform/ output/inline-manifests.yaml output/kubeconfig output/talosconfig .terraform.lock.hcl ~/.kube/*
