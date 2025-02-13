@@ -16,7 +16,6 @@ provider "kubernetes" {
   client_certificate     = local.kubeconfig_data.client_certificate
   client_key             = local.kubeconfig_data.client_key
   cluster_ca_certificate = local.kubeconfig_data.cluster_ca_certificate
-  load_config_file       = false
 }
 
 provider "kubectl" {
@@ -49,10 +48,7 @@ provider "helm" {
 }
 
 provider "kustomization" {
-  host                   = local.kubeconfig_data.host
-  client_certificate     = local.kubeconfig_data.client_certificate
-  client_key             = local.kubeconfig_data.client_key
-  cluster_ca_certificate = local.kubeconfig_data.cluster_ca_certificate
+  kubeconfig_path = "~/.kube/config"
 }
 
 # This resource ensures all providers have a working cluster before proceeding
