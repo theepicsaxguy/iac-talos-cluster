@@ -12,14 +12,32 @@ locals {
 resource "talos_machine_secrets" "this" {}
 
 data "talos_client_configuration" "this" {
-  //noinspection HILUnresolvedReference
   client_configuration = talos_machine_secrets.this.client_configuration
   cluster_name         = var.cluster_name
-  endpoints = concat([var.cluster_vip], [
-    for i in range(
-      var.control_plane_first_ip, var.control_plane_first_ip + local.vm_control_planes_count
-    ) : cidrhost(var.network_cidr, i)
-  ])
+  endpoints = [
+    for i in range(var.control_plane_first_ip, var.control_plane_first_ip + local.vm_control_planes_count) : 
+    cidrhost(var.network_cidr, i)
+  ]
+}
+
+data "talos_machine_configuration" "init" {
+  machine_type       = "controlplane"
+  machine_secrets    = talos_machine_secrets.this.machine_secrets
+  cluster_name       = var.cluster_name
+  cluster_endpoint   = local.kubernetes_endpoint
+  talos_version      = "v${var.talos_version}"
+  kubernetes_version = "v${var.k8s_version}"
+  
+  config_patches = [
+    templatefile("${path.module}/talos-config/init-boot.yaml.tpl", 
+      merge(local.talos_mc_defaults, {
+        hostname = "${var.control_plane_name_prefix}-1"
+        network_interface = "enx${lower(replace(macaddress.talos-control-plane[0].address, ":", ""))}"
+        ipv4_local = cidrhost(var.network_cidr, var.control_plane_first_ip)
+        network_ip_prefix = var.network_ip_prefix
+      })
+    )
+  ]
 }
 
 data "talos_machine_configuration" "cp" {

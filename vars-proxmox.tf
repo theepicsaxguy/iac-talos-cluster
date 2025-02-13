@@ -15,15 +15,11 @@ variable "proxmox_api_url" {
 
 variable "proxmox_servers" {
   description = "Proxmox servers on which the talos cluster will be deployed"
-  type        = map(object({
-    # Number of control plane nodes to deploy on the server
+  type = map(object({
     control_planes_count = optional(number, 3)
-    # The name of the storage pool where virtual hard disks will be stored
     disk_storage_pool    = string
-    # The name of the network bridge on the Proxmox host
     network_bridge       = optional(string, "vmbr0")
     vlan_tag             = optional(number, 150)
-    # Additional kubernetes node labels to add to the nodes deployed on this server
     node_labels          = optional(map(string), {})
   }))
 }
