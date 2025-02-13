@@ -37,6 +37,23 @@ provider "helm" {
     cluster_ca_certificate = base64decode(talos_machine_secrets.this.client_configuration.ca_certificate)
   }
 }
+provider "helm" {
+  kubernetes {
+    host                   = local.kubeconfig_data.host
+    client_certificate     = local.kubeconfig_data.client_certificate
+    client_key             = local.kubeconfig_data.client_key
+    cluster_ca_certificate = local.kubeconfig_data.cluster_ca_certificate
+  }
+}
+
+provider "kubectl" {
+  host                   = local.kubeconfig_data.host
+  client_certificate     = local.kubeconfig_data.client_certificate
+  client_key             = local.kubeconfig_data.client_key
+  cluster_ca_certificate = local.kubeconfig_data.cluster_ca_certificate
+  load_config_file       = false
+  apply_retry_count      = 3
+}
 
 resource "null_resource" "providers_dependency" {
   depends_on = [null_resource.talos-cluster-up]
